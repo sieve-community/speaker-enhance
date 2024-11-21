@@ -21,7 +21,7 @@ Or see [Calling `speaker-enhance` via the Sieve SDK](#calling-speaker-enhance-vi
 * `blur_background`: If true, blurs the background.
     * If `background_img` is provided, blurs the background image.
     * Otherwise, blurs the background of the input video.
-* `blur_strength`: Larger values make the background blurrier. A value of 0 means no blurring. Defaults to 19.
+* `blur_strength`: Size of blurring kernel. Larger values blur the background more. A value of 0 means no blurring. Defaults to 19.
 
 ## Calling `speaker-enhance` via the Sieve SDK
 You can install `sieve` via pip with `pip install sievedata`.
