@@ -29,7 +29,7 @@ def enhance_speaker(
 ) -> sieve.File:
     import cv2
     import numpy as np
-    from utils import masked_blur, write_video_futures
+    from utils import masked_blur, write_video_futures, write_output
 
     zeros = 8
     audio_enhance_fn = sieve.function.get("sieve/audio-enhance")
@@ -88,7 +88,7 @@ def enhance_speaker(
         ]
     )
 
-    audio_enhance_out = audio_enhance_fn.push(sieve.File(audio_path))
+    audio_enhance_out = audio_enhance_fn.push(sieve.File(audio_path), backend="auphonic")
 
     if background_img is not None:
         # resize to fit video dimensions
@@ -153,27 +153,26 @@ def enhance_speaker(
     for i, (ecc_frame_path, bgr_frame_path, ecc_future) in enumerate(
         zip(ecc_frame_paths, bgr_frame_paths, ecc_futures)
     ):
-        if i % 100 == 0:
-            print(f"Writing frame {i} of {len(ecc_frame_paths)}...")
-        ecc_future.result()  # wait for frame to be written
-        ecc_frame = cv2.imread(ecc_frame_path)
-        mask = cv2.imread(bgr_frame_path, cv2.IMREAD_GRAYSCALE) > 128
-        if background_img is not None:
-            masked_frame = np.where(mask[..., np.newaxis], ecc_frame, background_img)
-        elif len(background_color_rgb) == 3:
-            masked_frame = np.where(
-                mask[..., np.newaxis], ecc_frame, np.array(background_color_rgb[::-1])
-            )
-        else:
-            blurred_background = masked_blur(
-                ecc_frame, mask, kernel_size=(blur_strength, blur_strength)
-            )
-            masked_frame = np.where(mask[..., np.newaxis], ecc_frame, blurred_background)
-
         output_path = os.path.join(output_dir, f"{str(i).zfill(zeros)}.png")
-        write_futures.append(writer.submit(cv2.imwrite, output_path, masked_frame))
+        write_futures.append(
+            writer.submit(
+                write_output,
+                ecc_future,
+                ecc_frame_path,
+                bgr_frame_path,
+                output_path,
+                background_img,
+                background_color_rgb if len(background_color_rgb) == 3 else None,
+                blur_strength,
+            )
+        )
 
-    concurrent.futures.wait(write_futures)
+    completed = 0
+    for _ in concurrent.futures.as_completed(write_futures):
+        completed += 1
+        if completed % 100 == 0:
+            print(f"Finished writing frame {completed} of {len(write_futures)}...")
+
     print("Finished writing output frames, creating output video...")
 
     # combine output frames into video

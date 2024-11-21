@@ -79,3 +79,26 @@ def masked_blur(img, mask, kernel_size=(19, 19)):
         conv_sum[..., np.newaxis] + 1e-6
     )).clip(min=0, max=255).astype(np.uint8)
     return np.where(mask[..., np.newaxis], img, blurred_frame)
+
+
+def write_output(
+    ecc_future,
+    ecc_frame_path,
+    mask_frame_path,
+    output_path,
+    background_img=None,
+    background_color_rgb=None,
+    blur_strength=19,
+):
+    
+    mask = cv2.imread(mask_frame_path, cv2.IMREAD_GRAYSCALE) > 128
+    ecc_future.result()
+    ecc_frame = cv2.imread(ecc_frame_path)
+    if background_img is not None:
+        masked_frame = np.where(mask[..., np.newaxis], ecc_frame, background_img)
+    elif background_color_rgb is not None:
+        masked_frame = np.where(mask[..., np.newaxis], ecc_frame, np.array(background_color_rgb[::-1]))
+    else:
+        blurred_background = masked_blur(ecc_frame, mask, kernel_size=(blur_strength, blur_strength))
+        masked_frame = np.where(mask[..., np.newaxis], ecc_frame, blurred_background)
+    cv2.imwrite(output_path, masked_frame)
