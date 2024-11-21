@@ -72,10 +72,10 @@ def get_fps(video_file_path: str):
 def masked_blur(img, mask, kernel_size=(19, 19)):
     # weighted blur kernel
     inv_mask = ~mask
-    conv_sum = cv2.boxFilter(inv_mask.astype(np.float32), -1, kernel_size, normalize=False).clip(min=0)
+    conv_sum = cv2.boxFilter(inv_mask.astype(np.float32), cv2.CV_32F, kernel_size, normalize=False).clip(min=0)
     inv_masked_frame = img * inv_mask[..., np.newaxis]
     # apply 2d kernel to 3d img
-    blurred_frame = cv2.boxFilter(inv_masked_frame, cv2.CV_32F, kernel_size, normalize=False) / (
-        conv_sum[..., np.newaxis] + 1e-7
-    ).clip(min=0, max=255).astype(np.uint8)
+    blurred_frame = (cv2.boxFilter(inv_masked_frame, cv2.CV_32F, kernel_size, normalize=False) / (
+        conv_sum[..., np.newaxis] + 1e-6
+    )).clip(min=0, max=255).astype(np.uint8)
     return np.where(mask[..., np.newaxis], img, blurred_frame)
