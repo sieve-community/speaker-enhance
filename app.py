@@ -116,7 +116,7 @@ def enhance_speaker(video: sieve.File) -> sieve.File:
             "-framerate",
             str(original_video_fps),
             "-i",
-            os.path.join(output_dir, "%d.png"),
+            os.path.join(output_dir, f"%{zeros}d.png"),
             "-c:v",
             "libx264",
             "-pix_fmt",
