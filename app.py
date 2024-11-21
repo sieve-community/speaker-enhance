@@ -5,13 +5,17 @@ import zipfile
 import sieve
 import subprocess
 
-from utils import write_video_futures
 
 
 @sieve.function(
     name="speaker-enhance",
     metadata=sieve.Metadata(
+        title="Speaker Enhance",
         description="Enhance a talking head video",
+        tags=["talking head", "video", "speaker", "enhance", "background", "eye contact"],
+        image=sieve.File(path=os.path.join(os.path.dirname(__file__), "icon.jpeg")),
+        code_url="https://github.com/sieve-community/speaker-enhance",
+        readme=open(os.path.join(os.path.dirname(__file__), "README.md")).read(),
     ),
     python_packages=["opencv-python-headless", "numpy"],
     system_packages=["ffmpeg"],
@@ -20,11 +24,12 @@ def enhance_speaker(
     video: sieve.File,
     background_img: sieve.File = None,
     blur_background: bool = False,
+    blur_strength: int = 19,
     background_color_rgb: str = "",
 ) -> sieve.File:
     import cv2
     import numpy as np
-    from utils import masked_blur
+    from utils import masked_blur, write_video_futures
 
     zeros = 8
     audio_enhance_fn = sieve.function.get("sieve/audio-enhance")
@@ -51,6 +56,9 @@ def enhance_speaker(
         raise ValueError(
             "Must provide background_img, background_color_rgb, or set blur_background to True"
         )
+
+    if blur_strength <= 0:
+        blur_background = False
 
     if len(background_color_rgb) == 3 and background_img is not None:
         print("Overriding background_color_rgb with background_img")
@@ -95,7 +103,11 @@ def enhance_speaker(
         else:
             raise ValueError("Failed to load background_img")
         if blur_background:
-            background_img = masked_blur(background_img, np.zeros((video_height, video_width), dtype=np.bool_))
+            background_img = masked_blur(
+                background_img,
+                np.zeros((video_height, video_width), dtype=np.bool_),
+                kernel_size=(blur_strength, blur_strength),
+            )
 
     from utils import get_fps
 
@@ -153,7 +165,9 @@ def enhance_speaker(
                 mask[..., np.newaxis], ecc_frame, np.array(background_color_rgb[::-1])
             )
         else:
-            blurred_background = masked_blur(ecc_frame, mask)
+            blurred_background = masked_blur(
+                ecc_frame, mask, kernel_size=(blur_strength, blur_strength)
+            )
             masked_frame = np.where(mask[..., np.newaxis], ecc_frame, blurred_background)
 
         output_path = os.path.join(output_dir, f"{str(i).zfill(zeros)}.png")
@@ -211,8 +225,5 @@ def enhance_speaker(
 if __name__ == "__main__":
     enhance_speaker(
         sieve.File("/home/azureuser/sample_inputs/karp.mp4"),
-        background_img=sieve.File(
-            url="https://www.bu.edu/files/2022/07/feat-STScI-01G7ETNMR8CBHQQ64R4CVA1E6T.jpg"
-        ),
         blur_background=True,
     )
