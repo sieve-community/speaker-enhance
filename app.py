@@ -11,7 +11,7 @@ import subprocess
     name="speaker-enhance",
     metadata=sieve.Metadata(
         title="Speaker Enhance",
-        description="Enhance a talking head video",
+        description="Enhance a talking head video by removing the background, correcting eye contact, and enhancing the audio.",
         tags=["talking head", "video", "speaker", "enhance", "background", "eye contact"],
         image=sieve.File(path=os.path.join(os.path.dirname(__file__), "icon.jpeg")),
         code_url="https://github.com/sieve-community/speaker-enhance",
@@ -223,6 +223,6 @@ def enhance_speaker(
 
 if __name__ == "__main__":
     enhance_speaker(
-        sieve.File("/home/azureuser/sample_inputs/karp.mp4"),
+        sieve.File("sama.mp4"),
         blur_background=True,
     )
