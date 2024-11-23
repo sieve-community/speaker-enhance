@@ -1,5 +1,5 @@
 
-| ![GIF](https://drive.google.com/thumbnail?id=1t_jAaTgN4nYujkNR-KLLbyXP4BF9NGBX&sz=h480) | ![GIF](https://drive.google.com/thumbnail?id=13A0Jh8Ejl_o4dJVcYsgN0p_85jUO4Dey&sz=h480) |
+| ![GIF](https://storage.googleapis.com/sieve-public-data/eyecontact.gif) | ![GIF](https://storage.googleapis.com/sieve-public-data/real_blur.gif) |
 |:---:|:---:|
 
 # speaker-enhance
@@ -8,6 +8,8 @@ This is a Sieve pipeline that enhances a talking head video by:
 * Enhancing and cleaning up the audio with the [audio-enhance](https://sievedata.com/functions/sieve/audio-enhance) Sieve function.
 * Replacing/blurring the background with the [background-removal](https://sievedata.com/functions/sieve/background-removal) Sieve function.
 * Correcting eye contact with the [eye-contact-correction](https://sievedata.com/functions/sieve/eye-contact-correction) Sieve function.
+
+**Note:** This function is a demo. To use it in production, please deploy it to [your own Sieve account](#deploying-speaker-enhance-to-your-own-sieve-account).
 
 The pipeline completes jobs quickly by running each step (audio enhancement, background removal, eye contact correction) in parallel.
 
@@ -49,3 +51,16 @@ out = speaker_enhance.run(video, blur_background=True)
 # create a corrected video with a custom background color
 out = speaker_enhance.run(video, background_color_rgb="255,255,255")
 ```
+
+## Deploying `speaker-enhance` to your own Sieve account
+First ensure you have the Sieve Python SDK installed: `pip install sievedata` and set `SIEVE_API_KEY` to your Sieve API key.
+You can find your API key at [https://www.sievedata.com/dashboard/settings](https://www.sievedata.com/dashboard/settings).
+
+Then deploy the function to your account:
+```bash
+git clone https://github.com/sieve-community/speaker-enhance
+cd speaker-enhance
+sieve deploy app.py
+```
+
+You can now find the function in your Sieve account and call it via API or SDK.
