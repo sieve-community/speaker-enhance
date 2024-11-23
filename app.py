@@ -63,14 +63,15 @@ def enhance_speaker(
     if len(background_color_rgb) == 3 and background_img is not None:
         print("Overriding background_color_rgb with background_img")
 
+    # start background removal job
     bgr_out = bgr_function.push(
         video, backend="parallax", video_output_format="zip", output_type="raw_mask"
     )
 
-    # eye contact correction is next most expensive
+    # start eye contact correction job
     ecc_out = ecc_function.push(video)
 
-    # audio enhance takes the longest usually so push it first
+    # extract audio from video
     audio_path = "/tmp/audio.wav"
     subprocess.run(
         [
@@ -88,11 +89,11 @@ def enhance_speaker(
         ]
     )
 
+    # start audio enhance job
     audio_enhance_out = audio_enhance_fn.push(sieve.File(audio_path), backend="auphonic")
 
     if background_img is not None:
         # resize to fit video dimensions
-        # get video height, width
         cap = cv2.VideoCapture(video.path)
         video_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         video_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -102,6 +103,7 @@ def enhance_speaker(
             background_img = cv2.resize(img, (video_width, video_height))
         else:
             raise ValueError("Failed to load background_img")
+        
         if blur_background:
             background_img = masked_blur(
                 background_img,
@@ -110,7 +112,6 @@ def enhance_speaker(
             )
 
     from utils import get_fps
-
     original_video_fps = get_fps(video.path)
 
     # get ecc result
@@ -147,6 +148,7 @@ def enhance_speaker(
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
 
+    # write output frames
     writer = concurrent.futures.ThreadPoolExecutor()
     write_futures = []
     print("Writing output frames...")
@@ -195,9 +197,10 @@ def enhance_speaker(
         ]
     )
 
-    # overlay audio on output video
-    output_video_path = "/tmp/speaker_enhance_output_with_audio.mp4"
+    # get audio enhance result
     audio_enhance_out_path = audio_enhance_out.result().path
+    # overlay enhanced audio on output video
+    output_video_path = "/tmp/speaker_enhance_output_with_audio.mp4"
     subprocess.run(
         [
             "ffmpeg",
